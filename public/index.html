@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Application</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <h1 id="heading">Chat App</h1>
+  <div id="user-list">
+    <h3>Online Users</h3>
+    <ul id="users"></ul>
+  </div>
+
+  <div id="chat">
+    <!-- Messages will appear here -->
+  </div>
+
+  <form id="message-form">
+    <input type="text" id="message-input" placeholder="Enter Your Message" required>
+    <button type="submit">Send</button>
+  </form>
+
+  <!-- Scripts at the end -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    window.onload = function(){
+  console.log("Page Loaded");
+  const userName = prompt("Enter our name")
+  console.log("PRompt Shown")
+  if(!userName) return;
+  const socket = io()
+    const chat = document.getElementById('chat');
+    const userList = document.getElementById('users');
+    const messageForm = document.getElementById('message-form');
+    const messageInput = document.getElementById('message-input');
+
+
+    socket.emit('join', userName);
+
+    socket.on('userJoined', (user) => {
+      addMessage(`${user} has joined the chat`);
+    });
+
+    socket.on('userLeft', (user) => {
+      addMessage(`${user} has left the chat`);
+    });
+
+    socket.on("userList", (users) => {
+      userList.innerHTML = users.map(user => `<li>${user}</li>`).join('');
+    });
+
+    socket.on('chatMessage', (message) => {
+      addMessage(`${message.userName}: ${message.text}`);
+    });
+
+    // Handle form submission
+    messageForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+
+      const exactMessageText = messageInput.value.trim();
+      if (exactMessageText) {
+        socket.emit('chatMessage', {
+          userName,
+          text: exactMessageText
+        });
+        messageInput.value = ""; // Clear input
+      }
+    });
+
+    function addMessage(input) {
+      const messageElement = document.createElement('div');
+      messageElement.textContent = input;
+      chat.appendChild(messageElement);
+      chat.scrollTop = chat.scrollHeight;
+    }
+  }
+  </script>
+</body>
+</html>
